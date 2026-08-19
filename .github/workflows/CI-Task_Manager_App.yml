@@ -1,0 +1,130 @@
+# CI for a growing front-end project (Webpack-ready)
+# - Validates PRs and pushes
+# - Uses npm ci when a lockfile exists (reproducible)
+# - Caches dependencies
+# - Runs lint/test if scripts are added (uses --if-present so it won't fail if missing)
+# - Builds with `npm run build` if present, otherwise falls back to npx webpack if webpack.config.js exists
+# - Detects common build output folders (dist, build, public), uploads an artifact if found
+# - If pushed to main and a build artifact exists, deploys the artifact to GitHub Pages
+
+name: CI - Task Manager App
+
+on:
+  push:
+    branches: [ "main" ]
+    # Optional: uncomment to run CI only when frontend files change
+    # paths:
+    #   - 'src/**'
+    #   - 'public/**'
+    #   - 'index.html'
+    #   - 'package.json'
+  pull_request:
+    branches: [ "main" ]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    outputs:
+      build-path: ${{ steps.detect-output.outputs.build-path }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }} (with npm cache)
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          elif [ -f package.json ]; then
+            npm install
+          else
+            echo "No package.json found — skipping install"
+          fi
+
+      - name: Lint (if present)
+        run: npm run lint --if-present
+
+      - name: Test (if present)
+        run: npm test --if-present
+
+      - name: Build (npm build if present, fallback to webpack)
+        run: |
+          if [ -f package.json ]; then
+            npm run build --if-present
+          elif [ -f webpack.config.js ]; then
+            npx webpack
+          else
+            echo "No build script or webpack.config.js found — skipping build"
+          fi
+
+      - name: Detect build output folder
+        id: detect-output
+        run: |
+          candidates="dist build public"
+          found=""
+          for d in $candidates; do
+            if [ -d "$d" ]; then
+              found="$d"
+              break
+            fi
+          done
+          if [ -z "$found" ] && [ -f index.html ]; then
+            found="."
+          fi
+          if [ -n "$found" ]; then
+            echo "Detected build folder: $found"
+            echo "build-path=$found" >> $GITHUB_OUTPUT
+          else
+            echo "build-path=" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload build artifact (if any)
+        if: steps.detect-output.outputs.build-path != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-build
+          path: ${{ steps.detect-output.outputs.build-path }}
+
+  deploy-pages:
+    needs: build
+    if: github.ref == 'refs/heads/main' && needs.build.outputs.build-path != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: site-build
+          path: ./artifact
+
+      - name: Prepare files for Pages
+        run: |
+          mkdir -p publish-root
+          entries=(artifact/*)
+          if [ ${#entries[@]} -eq 1 ] && [ -d "${entries[0]}" ]; then
+            cp -r "${entries[0]}"/* publish-root/
+          else
+            cp -r artifact/* publish-root/
+          fi
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: ./publish-root
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v1
