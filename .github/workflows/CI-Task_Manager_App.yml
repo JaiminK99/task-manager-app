@@ -12,12 +12,12 @@ name: CI - Task Manager App
 on:
   push:
     branches: [ "main" ]
-    # Optional: uncomment to run CI only when frontend files change
-    # paths:
-    #   - 'src/**'
-    #   - 'public/**'
-    #   - 'index.html'
-    #   - 'package.json'
+    Optional: uncomment to run CI only when frontend files change
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'index.html'
+      - 'package.json'
   pull_request:
     branches: [ "main" ]
 
