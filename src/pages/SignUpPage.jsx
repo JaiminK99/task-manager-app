@@ -18,6 +18,10 @@ function SignUpPage() {
       password,
     };
     console.log(submitFormData);
+
+    setUsername("");
+    setEmail("");
+    setPassword("");
   };
 
   return (

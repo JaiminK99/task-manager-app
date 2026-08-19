@@ -14,7 +14,11 @@ export default function LoginPage() {
       email,
       password,
     };
+
     console.log(submitFormData);
+
+    setEmail("");
+    setPassword("");
   };
 
   return (
@@ -24,12 +28,14 @@ export default function LoginPage() {
         <label>Email:</label>
         <input
           type="email"
+          value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
         ></input>
         <label>Password:</label>
         <input
           type="password"
+          value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
         ></input>
