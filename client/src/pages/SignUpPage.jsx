@@ -1,4 +1,8 @@
 import { useState } from "react";
+import FormSubmitButton from "../components/FormSubmitButton";
+import UsernameInput from "../components/UsernameInput";
+import Emailnput from "../components/EmailInput";
+import PasswordInput from "../components/PasswordInput";
 
 function SignUpPage() {
   const [username, setUsername] = useState("");
@@ -27,29 +31,11 @@ function SignUpPage() {
   return (
     <div>
       <h3>SignUp Page</h3>
-      <form>
-        <label>Username:</label>
-        <input
-          type="text"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          required
-        ></input>
-        <label>Email:</label>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        ></input>
-        <label>Password:</label>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        ></input>
-        <button onClick={handleSubmit}>Submit</button>
+      <form onSubmit={handleSubmit}>
+        <UsernameInput username={username} setUsername={setUsername} />
+        <Emailnput email={email} setEmail={setEmail} />
+        <PasswordInput password={password} setPassword={setPassword} />
+        <FormSubmitButton />
       </form>
     </div>
   );
