@@ -1,4 +1,7 @@
 import { useState } from "react";
+import FormSubmitButton from "../components/FormSubmitButton";
+import Emailnput from "../components/EmailInput";
+import PasswordInput from "../components/PasswordInput";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -24,22 +27,10 @@ export default function LoginPage() {
   return (
     <div>
       <h3>Login Page</h3>
-      <form>
-        <label>Email:</label>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        ></input>
-        <label>Password:</label>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        ></input>
-        <button onClick={handleSubmit}>Submit</button>
+      <form onSubmit={handleSubmit}>
+        <Emailnput email={email} setEmail={setEmail} />
+        <PasswordInput password={password} setPassword={setPassword} />
+        <FormSubmitButton />
       </form>
     </div>
   );
